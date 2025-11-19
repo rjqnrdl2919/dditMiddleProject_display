@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="graph">
+
+<select id="selectGraphMapRecent" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT
+		AD.ADDRESS_CODE AS addressCode,
+		NVL(VR.COMPLAINT_COUNT, 0) AS complaintCount
+	FROM ADDRESS AD
+	LEFT JOIN V_GRAPH_MAP_RECENT VR ON AD.ADDRESS_CODE = VR.ADDRESS_CODE
+</select>
+
+<select id="selectGraphMapAll" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT
+		AD.ADDRESS_CODE AS addressCode,
+		NVL(VA.COMPLAINT_COUNT, 0) AS complaintCount
+	FROM ADDRESS AD
+	LEFT JOIN V_GRAPH_MAP_ALL VA ON AD.ADDRESS_CODE = VA.ADDRESS_CODE
+</select>
+
+<select id="selectGraphDonutRecent" parameterType="String"  resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT
+		AD.address_code AS addressCode,
+		C.category_id AS categoryId,
+		CT.category_name AS categoryName,
+		NVL(VR.complaint_count, 0) AS complaintCount
+	FROM address AD
+	CROSS JOIN (
+    	SELECT DISTINCT category_id FROM complaint
+	) C
+	JOIN category CT ON C.category_id = CT.category_id
+  	LEFT JOIN V_GRAPH_DONUT_RECENT VR
+		ON AD.address_code = VR.address_code AND C.category_id = VR.category_id
+	WHERE (
+		#{addressCode, jdbcType=VARCHAR} IS NULL 
+		OR #{addressCode, jdbcType=VARCHAR} = ''
+		OR AD.address_code LIKE #{addressCode, jdbcType=VARCHAR} || '%'
+	) 
+</select>
+
+<select id="selectGraphDonutAll" parameterType="String"  resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT
+		AD.address_code AS addressCode,
+		C.category_id AS categoryId,
+		CT.category_name AS categoryName,		
+		NVL(VA.complaint_count, 0) AS complaintCount
+	FROM address AD
+	CROSS JOIN (
+    	SELECT DISTINCT category_id FROM complaint
+	) C
+	JOIN category CT ON C.category_id = CT.category_id	
+  	LEFT JOIN V_GRAPH_DONUT_ALL VA
+		ON AD.address_code = VA.address_code AND C.category_id = VA.category_id
+	WHERE (
+		#{addressCode, jdbcType=VARCHAR} IS NULL 
+		OR #{addressCode, jdbcType=VARCHAR} = ''
+		OR AD.address_code LIKE #{addressCode, jdbcType=VARCHAR} || '%'
+	) 
+</select>
+
+<select id="selectGraphLineHalfHour" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT
+		STATUS as status,
+		SAVED_AT as savedAt,
+		COMPLAINT_COUNT as complaintCount
+	FROM V_GRAPH_LINE_HALFHOUR
+	ORDER BY SAVED_AT
+</select>
+
+<select id="selectGraphLineDaily" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT
+		STATUS as status,
+		SAVED_AT as savedAt,
+		COMPLAINT_COUNT as complaintCount
+	FROM V_GRAPH_LINE_DAILY
+	ORDER BY SAVED_AT
+</select>
+
+<select id="selectClusterData" parameterType="map" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+SELECT
+	<!-- 시간 단위 그룹화 -->
+	<choose>
+		<when test='"M30".equals(interval)'>
+			TO_CHAR(CC.SAVED_AT, 'YYYY-MM-DD HH24:MI')
+		</when>
+		<when test='"H1".equals(interval)'>
+			TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24'), 'YYYY-MM-DD HH24":00"')
+		</when>
+		<when test='"H2".equals(interval)'>
+			TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 2)/24, 'YYYY-MM-DD HH24":00"')
+		</when>
+		<when test='"H3".equals(interval)'>
+			TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 3)/24, 'YYYY-MM-DD HH24":00"')
+		</when>
+		<when test='"H4".equals(interval)'>
+			TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 4)/24, 'YYYY-MM-DD HH24":00"')
+		</when>
+		<when test='"H6".equals(interval)'>
+			TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 6)/24, 'YYYY-MM-DD HH24":00"')
+		</when>
+		<when test='"H12".equals(interval)'>
+			TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 12)/24, 'YYYY-MM-DD HH24":00"')
+		</when>
+		<when test='"D1".equals(interval)'>
+			TO_CHAR(TRUNC(CC.SAVED_AT, 'DD'), 'YYYY-MM-DD "00:00"')
+		</when>
+		<otherwise>
+			TO_CHAR(CC.SAVED_AT, 'YYYY-MM-DD HH24:MI')
+		</otherwise>
+	</choose> AS timeSlot,
+		C.CATEGORY_ID AS categoryId,
+		A.ADDRESS_CODE AS addressCode,
+		SUM(CC.COMPLAINT_COUNT) AS complaintCount,
+		SUM(CC.IS_HARMFUL) AS isHarmful,
+		SUM(CC.IS_SPAM) AS isSpam,
+		SUM(CC.IS_URGENT) AS isUrgent,
+		A.SIDO_NAME as sidoName,
+		A.SIGUNGU_NAME as sigunguName,
+		A.EMD_NAME as emdName,
+		C.CATEGORY_NAME as categoryName
+	FROM COMPLAINT_CLUSTER CC
+	LEFT JOIN ADDRESS A ON CC.ADDRESS_CODE = A.ADDRESS_CODE
+	LEFT JOIN CATEGORY C ON CC.CATEGORY_ID = C.CATEGORY_ID
+	<where>
+	<!-- 유형 필터 -->
+	<if test="categoryId != null and categoryId != '' and categoryId != '전체'">
+	  AND (
+	    (SUBSTR(#{categoryId}, 3, 2) = '00' AND SUBSTR(CC.CATEGORY_ID, 1, 2) = SUBSTR(#{categoryId}, 1, 2))
+	    OR CC.CATEGORY_ID = #{categoryId}
+	  )
+	</if>
+
+  <!-- 주소 필터 -->
+	<if test="addressCode != null and addressCode != '' and addressCode != '전체'">
+	  AND (
+	    (SUBSTR(#{addressCode}, 6, 3) = '000' AND SUBSTR(CC.ADDRESS_CODE, 1, 5) = SUBSTR(#{addressCode}, 1, 5))
+	    OR (SUBSTR(#{addressCode}, 3, 3) = '000' AND SUBSTR(CC.ADDRESS_CODE, 1, 2) = SUBSTR(#{addressCode}, 1, 2))
+	    OR CC.ADDRESS_CODE = #{addressCode}
+	  )
+	</if>
+
+  <!-- 기간 -->
+	AND CC.SAVED_AT BETWEEN #{startDate} AND #{endDate}
+
+	<!-- 악성 민원 제외 조건 -->
+	<if test="isHarmful != null">
+	  AND CC.IS_HARMFUL = #{isHarmful, jdbcType=NUMERIC}
+	</if>
+	<if test="isSpam != null">
+	  AND CC.IS_SPAM = #{isSpam, jdbcType=NUMERIC}
+	</if>
+	<if test="isUrgent != null">
+	  AND CC.IS_URGENT = #{isUrgent, jdbcType=NUMERIC}
+	</if>
+</where>
+
+GROUP BY
+  <!-- select의 시간 단위 그룹과 동일하게 -->
+  <choose>
+    <when test='"M30".equals(interval)'>
+      TO_CHAR(CC.SAVED_AT, 'YYYY-MM-DD HH24:MI')
+    </when>
+    <when test='"H1".equals(interval)'>
+      TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24'), 'YYYY-MM-DD HH24":00"')
+    </when>
+    <when test='"H2".equals(interval)'>
+      TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 2)/24, 'YYYY-MM-DD HH24":00"')
+    </when>
+    <when test='"H3".equals(interval)'>
+      TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 3)/24, 'YYYY-MM-DD HH24":00"')
+    </when>
+    <when test='"H4".equals(interval)'>
+      TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 4)/24, 'YYYY-MM-DD HH24":00"')
+    </when>
+    <when test='"H6".equals(interval)'>
+      TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 6)/24, 'YYYY-MM-DD HH24":00"')
+    </when>
+    <when test='"H12".equals(interval)'>
+      TO_CHAR(TRUNC(CC.SAVED_AT, 'HH24') - MOD(TO_NUMBER(TO_CHAR(CC.SAVED_AT, 'HH24')), 12)/24, 'YYYY-MM-DD HH24":00"')
+    </when>
+    <when test='"D1".equals(interval)'>
+      TO_CHAR(TRUNC(CC.SAVED_AT, 'DD'), 'YYYY-MM-DD "00:00"')
+    </when>
+    <otherwise>
+      TO_CHAR(CC.SAVED_AT, 'YYYY-MM-DD HH24:MI')
+    </otherwise>
+  </choose>,
+  C.CATEGORY_ID,
+  A.ADDRESS_CODE,
+  A.SIDO_NAME,
+  A.SIGUNGU_NAME,
+  A.EMD_NAME,
+  C.CATEGORY_NAME
+
+ORDER BY timeSlot ASC
+</select>
+
+<select id="selectStatusData" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	
+</select>
+
+<!-- 긴급 민원 -->
+<select id="getGraphMapUrgent" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT DISTINCT 
+		ADDRESS_CODE AS addressCode,
+		1 as isUrgent
+	FROM COMPLAINT
+	WHERE IS_URGENT = 1
+	  AND STATUS != 'DONE'
+</select>
+
+<!-- 주소 드롭다운용 -->
+<select id="getAddressList" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT DISTINCT 
+		ADDRESS_CODE AS addressCode,
+		SIDO_NAME AS sidoName,
+		SIGUNGU_NAME AS sigunguName,
+		EMD_NAME AS emdName
+	FROM ADDRESS
+	ORDER BY ADDRESS_CODE
+</select>
+
+<!-- 유형 드롭다운용 -->
+<select id="getCategoryList" resultType="kr.or.ddit.cpmn.graph.vo.GraphVO">
+	SELECT DISTINCT 
+		CATEGORY_ID AS categoryId,
+		CATEGORY_NAME AS categoryName
+	FROM CATEGORY
+	ORDER BY CATEGORY_ID
+</select>
+
+</mapper>

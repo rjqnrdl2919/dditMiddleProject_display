@@ -1,0 +1,501 @@
+/* 기본 초기화 */
+html, body {
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	overflow-x : hidden;
+	font-family: "Noto Sans KR", sans-serif;
+	box-sizing: border-box;
+}
+
+body {
+	display: flex;
+	overflow: hidden;
+	background-color: #f7f7f7;
+}
+/* 좌측, 우측 패널 */
+#leftPanel, #rightPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 1vh;
+  padding: 1vh;
+  height: auto;
+  box-sizing: border-box;
+}
+
+svg {
+	width: 100%;
+	height: 100%;
+}
+
+.card{
+  height: 45.5vh; 
+  width: 28vw; 
+  box-sizing: border-box;
+  padding: 2%;
+}
+ .card-body{
+	padding-top: 1px;
+}
+
+/* 상단 헤더 고정 */
+.admin-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6vh;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2vh;
+  border-bottom: 1px solid #ddd;
+  z-index: 2000;
+  box-sizing: border-box;
+}
+
+/* 기존 사이드바를 슬라이딩으로 수정 */
+.sidebar {
+  position: fixed;
+  top: 0vh;
+  left: -240px;
+  width: 240px;
+  height: 101vh;
+  background-color: rgb(0, 128, 255);
+  color: white;
+  transition: left 0.3s ease;
+  z-index: 3000;
+  padding: 7vh 12px;
+  box-sizing: border-box;
+}
+
+.sidebar.active {
+  left: 0;
+}
+
+/* 메인 콘텐츠 */
+.admin-main {
+	display: flex;
+  	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	padding: 7vh 1vw 1vh 1vw;
+	box-sizing: border-box;
+	overflow-y: auto;
+}
+
+/* 지도 전체 영역 컨테이너 */
+#mapSection {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  /* padding: 7vh 1vw 1vh 1vw; */
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 열기 버튼 */
+.open-btn {
+  position: fixed;
+  top: 1vh;
+  left: 1vh;
+  z-index: 4000;
+  background-color: rgb(0, 96, 255);
+  color: white;
+  height: 4vh;
+  width: 4vh;
+  border: none;
+  border-radius: 1vh;
+  cursor: pointer;
+}
+.open-btn:hover {
+  background-color: rgb(12, 95, 231);
+}
+
+.admin-header-right button {
+  background-color: #003366;
+  color: white;
+  border: none;
+  margin-left: 1vw;
+  padding: 1vh 1vw;
+  border-radius: 1vh;
+  cursor: pointer;
+}
+.admin-header-right button:hover {
+  background-color: #00264d;
+}
+
+.admin-header-left {
+  margin-left : 4vh;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.active ~ .admin-header .admin-header-left {
+  margin-left: 240px /* 사이드바 너비만큼 */
+}
+
+/* 사이드바 내부 버튼 */
+.sidebar-logo {
+  font-size: 1.4em;
+  font-weight: bold;
+  margin-bottom: 3vh;
+  text-align: center;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.sidebar ul li {
+  margin: 15px 2px;
+}
+
+.sidebar ul li a {
+  text-decoration: none;
+  color: white;
+  font-size: 16px;
+  display: block;
+  padding: 8px 8px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+}
+
+.sidebar ul li a:hover {
+  border: 2px solid #ffffff;
+  background-color: rgba(255,255,255,0.1);
+}
+
+/* 닫기 버튼 (sidebar 내부) */
+/* .sidebar .close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 2vh;
+  position: absolute;
+  top: 1vh;
+  right: 1vw;
+  cursor: pointer;
+} */
+
+/* 아코디언 submenu */
+.has-submenu .submenu {
+  display: none;
+  list-style: none;
+  padding-left: 15px;
+  margin-top: 5px;
+}
+
+.has-submenu .submenu li {
+  margin: 8px 0;
+}
+
+.has-submenu .submenu a {
+  font-size: 0.95em;
+  color: #fff;
+}
+
+.has-submenu .submenu a:hover {
+  color: #fff;
+}
+
+/* 모달 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px 30px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close {
+  font-size: 24px;
+  font-weight: bold;
+  color: #444;
+  cursor: pointer;
+}
+
+.modal-body p {
+  margin: 10px 0;
+}
+
+/*모바일 대용용 css */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .admin-main.with-sidebar {
+    margin-left: 200px;
+  }
+
+  .map-container {
+    height: 300px;
+  }
+
+/* chatlist용 css */
+
+#userSearchModal .modal-content {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#userSearchModal .modal-header {
+  border-bottom: 2px solid #004085;
+}
+
+#userSearchModal .modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+}
+
+#userSearchModal .table th,
+#userSearchModal .table td {
+  vertical-align: middle;
+  white-space: nowrap;
+   overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* 공지사항 FAQ 관리 스타일 통합 */
+
+.board-container-flex {
+/*   display: flex;
+  flex-direction: column;
+  height: 750px;
+  width: 1240px;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eee;
+  box-sizing: border-box; */
+  
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+  width: 1240px;
+  min-height: 750px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  height: 48px;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 600px;
+}
+
+.search-container input {
+  flex: 1;
+}
+
+.table-wrapper {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 300px;
+}
+
+#pagination {
+  margin-top: 20px;
+}
+
+
+/* ✅ 테이블 공통 스타일 (컬럼 고정 폭) */
+#noticeTable,
+#faqTable {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#noticeTable th,
+#noticeTable td,
+#faqTable th,
+#faqTable td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 10px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+}
+
+#noticeTable tbody tr:hover,
+#faqTable tbody tr:hover {
+  background-color: #f6f6f6;
+}
+
+/* ✅ 헤더 강조 */
+#noticeTable th,
+#faqTable th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* ✅ 열 폭 고정 */
+#noticeTable th:nth-child(1),
+#noticeTable td:nth-child(1),
+#faqTable th:nth-child(1),
+#faqTable td:nth-child(1) {
+  width: 40px;
+}
+
+#noticeTable th:nth-child(2),
+#noticeTable td:nth-child(2),
+#faqTable th:nth-child(2),
+#faqTable td:nth-child(2) {
+  width: 50%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#noticeTable th:nth-child(3),
+#noticeTable td:nth-child(3),
+#faqTable th:nth-child(3),
+#faqTable td:nth-child(3) {
+  width: 100px;
+}
+
+#noticeTable th:nth-child(4),
+#noticeTable td:nth-child(4),
+#faqTable th:nth-child(4),
+#faqTable td:nth-child(4) {
+  width: 120px;
+}
+
+#noticeTable th:nth-child(5),
+#noticeTable td:nth-child(5),
+#faqTable th:nth-child(5),
+#faqTable td:nth-child(5) {
+  width: 80px;
+}
+
+
+
+/* ================================================
+   📌 Dashboard 요약 카드 공통 스타일 (공지사항, 민원)
+   ================================================ */
+
+/* ✅ 카드 전체 */
+.summary-card {
+  margin: 20px auto;
+  max-width: 500px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  background-color: #fff;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* ✅ 카드 제목 */
+.summary-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  border-bottom: 10px solid #eee;
+  padding-bottom: 6px;
+}
+
+/* ✅ 아이템 링크 */
+.summary-card .list-group-item {
+  cursor: pointer;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background-color 0.2s ease;
+}
+.summary-card .list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* ✅ 제목 + 날짜 한 줄 고정 */
+.summary-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+  height: 1.4rem;
+}
+
+/* ✅ 제목 - 한 줄 말줄임 */
+.summary-item-title {
+  display: inline-block;       /* ✅ block → inline-block */
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 200px;            /* ✅ 제목 길이 제한 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;                    /* h6 기본 margin 제거 */
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+
+/* ✅ 날짜 - 고정 폭 */
+.summary-item-date {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* ✅ 내용 프리뷰 - 한 줄 말줄임 */
+.summary-item-preview {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #6c757d;
+  font-size: 0.85rem;
+  line-height: 1.2rem;
+  height: 1.2rem;
+  width: 100%;
+}
+}
